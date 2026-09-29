@@ -1,0 +1,66 @@
+:root {
+  --ink: #0b141c;
+  --panel: #121e29;
+  --amber: #f0a431;
+  --teal: #33c7b6;
+  --paper: #e9eef3;
+  --mute: #8fa0b0;
+  --red: #e2665a;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+.ticket-screen {
+  max-width: 480px;
+  margin: 4rem auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+.ticket-screen p {
+  color: var(--mute);
+}
+
+button {
+  background: var(--amber);
+  color: #1a1206;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.ticket {
+  margin-top: 2rem;
+  background: var(--panel);
+  border: 1px solid rgba(143, 160, 176, 0.2);
+  border-top: 3px solid var(--amber);
+  border-radius: 6px;
+  padding: 1.5rem;
+  text-align: left;
+}
+
+.ticket p {
+  color: var(--paper);
+  margin: 0.4rem 0;
+}
+
+.error {
+  color: var(--red);
+}
