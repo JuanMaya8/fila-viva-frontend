@@ -24,7 +24,7 @@ Combina teoría de colas y machine learning para decirle a una persona, en tiemp
 - Estilos base (`app/globals.css`) usando la misma paleta que la arquitectura de referencia del proyecto (fondo oscuro, acento ámbar para datos en vivo, teal para IA).
 
 **Explícitamente NO hecho todavía:**
-- No hay selección real de institución / tipo de trámite: los IDs están hardcodeados como placeholders (`DEMO_INSTITUTION_ID`, `DEMO_SERVICE_TYPE_ID`) hasta que exista una pantalla de configuración.
+- No hay selección real de institución / tipo de trámite: los IDs de demo están hardcodeados hasta que exista una pantalla de configuración.
 - No hay conexión WebSocket todavía (`socket.io-client` ya está en `package.json`, pero no se usa). La actualización de la predicción hoy requiere volver a tocar "Tomar un turno".
 - No hay Web Worker para suavizar el conteo regresivo (etapa 7 del pipeline de IA, ver `fila-viva-backend/README.md`).
 - No hay vista de pantalla de sala (kiosco) ni panel de funcionarios: solo existe la vista del ciudadano.
@@ -57,21 +57,19 @@ El frontend nunca le habla directamente a `fila-viva-ai`: siempre pasa por `fila
 
 ## 5. Cómo correrlo localmente
 
-```bash
-# 1. Instalar dependencias
-npm install
+Inicia primero `fila-viva-ai` y luego `fila-viva-backend`, cada uno desde su propia carpeta y con los comandos indicados en sus respectivos README. Confirma que el backend esté configurado con la URL/puerto donde escucha el servicio de IA y que ambos servicios estén activos antes de probar el flujo.
 
-# 2. Copiar variables de entorno
-cp .env.local.example .env.local
+En PowerShell, desde cualquier carpeta, inicia el frontend así:
 
-# 3. Levantar fila-viva-backend en paralelo (puerto 3000)
-#    y crear al menos un service-type de prueba desde /docs
-
-# 4. Levantar el frontend
+```powershell
+cd "C:\Users\Acer\Desktop\PROYECTO 1\fila-viva-frontend"
+$env:PORT = "3001"
 npm run dev
-
-# 5. Abrir http://localhost:3001 (o el puerto que indique Next si 3000 está ocupado por el backend)
 ```
+
+Deja esa terminal abierta y visita <http://localhost:3001>. El puerto `3001` evita la colisión con el backend, que normalmente usa `3000`.
+
+La primera vez, instala las dependencias desde la carpeta del frontend con `npm install`. Si el archivo `.env.local` aún no existe, créalo copiando `.env.local.example` y configura allí la URL del backend según las variables que use el proyecto.
 
 ## 6. Próximos pasos (backlog inmediato)
 
@@ -87,5 +85,14 @@ npm run dev
 - **Todo el código va en inglés**; este `README.md` va en español.
 - `src/lib/api.ts` define el contrato con el backend. Si el backend cambia su `TurnResponseDto`, actualizar esta interfaz primero.
 - No dupliques lógica de predicción acá: cualquier cálculo de tiempos de espera vive en `fila-viva-ai` y se recibe ya resuelto desde `fila-viva-backend`.
-- Los placeholders `REPLACE_WITH_A_REAL_...` en `app/page.tsx` son intencionales, no un olvido: reemplazarlos es parte del paso 1 del backlog.
+- Los IDs de demo en `app/page.tsx` deben corresponder a registros existentes en el backend; reemplazarlos por una selección real es parte del paso 1 del backlog.
 - Antes de agregar una librería de componentes UI, revisar si el equipo ya definió un sistema de diseño (ver si existe una nota al respecto en este README en una versión posterior).
+
+## 8. Despliegue gratuito en Vercel
+
+1. Importa el repositorio `fila-viva-frontend` en Vercel desde GitHub.
+2. Vercel detectará Next.js automáticamente; deja los comandos de build y salida predeterminados.
+3. Antes del despliegue, crea la variable de entorno `NEXT_PUBLIC_API_URL` con el valor `https://fila-viva-backend.onrender.com` para Production (y Preview si también vas a probar ramas).
+4. Despliega y abre la URL asignada por Vercel. La primera llamada al backend puede tardar si el servicio gratuito de Render estaba suspendido por inactividad.
+
+Este proyecto aún no tiene autenticación; úsalo solo para demos con los datos ficticios de esta guía.

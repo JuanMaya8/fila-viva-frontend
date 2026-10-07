@@ -6,8 +6,8 @@ import { createTurn, TurnResponse } from '@/src/lib/api';
 // TODO: replace with real ids once the institution / service-type
 // selection screen exists. For now these must match records already
 // created through fila-viva-backend's Swagger UI (POST /service-types).
-const DEMO_INSTITUTION_ID = 'REPLACE_WITH_A_REAL_INSTITUTION_ID';
-const DEMO_SERVICE_TYPE_ID = 'REPLACE_WITH_A_REAL_SERVICE_TYPE_ID';
+const DEMO_INSTITUTION_ID = '11111111-1111-4111-8111-111111111111';
+const DEMO_SERVICE_TYPE_ID = '887ad3bc-664d-4747-ae00-61d2188ca0d2';
 
 export default function HomePage() {
   const [turn, setTurn] = useState<TurnResponse | null>(null);
