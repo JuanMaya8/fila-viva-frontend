@@ -1,0 +1,16 @@
+{
+  "name": "Fila Viva · Banco Demo",
+  "short_name": "Fila Viva",
+  "description": "Tu turno y tu tiempo de espera real, actualizados en vivo.",
+  "start_url": "/turno",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0B141C",
+  "theme_color": "#0B141C",
+  "lang": "es",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/icon-maskable.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}
