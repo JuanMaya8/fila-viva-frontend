@@ -1,13 +1,17 @@
+import Link from 'next/link';
+
 export function Brand({ subtitle = 'Banco Demo · Sucursal Centro' }: { subtitle?: string }) {
   return (
-    <header className="brand">
-      <div className="brand-mark" aria-hidden>
+    <Link href="/" className="brand" aria-label="Fila Viva, ir al inicio">
+      <span className="brand-mark" aria-hidden>
         FV
-      </div>
-      <div>
-        <h1 style={{ margin: 0, fontSize: '1.3rem' }}>Fila Viva</h1>
-        <p className="muted small">{subtitle}</p>
-      </div>
-    </header>
+      </span>
+      <span>
+        <p className="brand-title">Fila Viva</p>
+        <p className="muted small" style={{ margin: 0 }}>
+          {subtitle}
+        </p>
+      </span>
+    </Link>
   );
 }

@@ -1,5 +1,6 @@
 'use client';
 
+import { AlertCircle, Eye, EyeOff, LogIn } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
 import { api, ApiError } from '../lib/api';
@@ -11,6 +12,7 @@ export function LoginForm() {
   const params = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(
     params.get('error') === 'forbidden' ? 'Tu usuario no tiene acceso a esa sección.' : null,
@@ -38,12 +40,13 @@ export function LoginForm() {
   }
 
   return (
-    <form className="stack" onSubmit={handleSubmit} style={{ marginTop: '0.75rem' }}>
+    <form className="stack" onSubmit={handleSubmit} style={{ marginTop: '0.5rem' }}>
       <label>
         Correo
         <input
           type="email"
           autoComplete="username"
+          placeholder="nombre@bancodemo.test"
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
@@ -51,20 +54,34 @@ export function LoginForm() {
       </label>
       <label>
         Contraseña
-        <input
-          type="password"
-          autoComplete="current-password"
-          required
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
+        <span style={{ position: 'relative', display: 'block' }}>
+          <input
+            type={showPassword ? 'text' : 'password'}
+            autoComplete="current-password"
+            required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            style={{ paddingRight: '3rem' }}
+          />
+          <button
+            type="button"
+            className="ghost icon-only"
+            aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+            onClick={() => setShowPassword((v) => !v)}
+            style={{ position: 'absolute', right: 4, top: 3 }}
+          >
+            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+          </button>
+        </span>
       </label>
       {error && (
         <p className="callout error" role="alert">
+          <AlertCircle size={18} aria-hidden />
           {error}
         </p>
       )}
       <button type="submit" className="secondary block" disabled={loading}>
+        <LogIn size={18} aria-hidden />
         {loading ? 'Ingresando…' : 'Ingresar'}
       </button>
     </form>
