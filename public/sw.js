@@ -1,6 +1,6 @@
 // Fila Viva service worker: offline shell for the client screens.
 // API calls, sockets and authenticated pages are never cached.
-const CACHE = 'fila-viva-v1';
+const CACHE = 'fila-viva-v2';
 const SHELL = ['/', '/turno', '/manifest.webmanifest', '/icon.svg', '/offline.html'];
 
 self.addEventListener('install', (event) => {
