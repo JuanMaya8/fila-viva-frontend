@@ -1,16 +1,19 @@
 'use client';
 
+import { BellRing, Clock3, ListOrdered, Volume2 } from 'lucide-react';
 import { useCallback, useState } from 'react';
 import { useNow } from '../hooks/useNow';
 import { useRoom, useSocket } from '../hooks/useSocket';
 import { api, pickInstitution } from '../lib/api';
 import { formatMinutes } from '../lib/format';
 import type { DisplayView } from '../lib/types';
+import { Brand } from './Brand';
+import { ServiceIcon } from './ui/visuals';
 
 export function LiveDisplay({ initial }: { initial: DisplayView | null }) {
   const { socket, connected } = useSocket();
   const [view, setView] = useState(initial);
-  const now = useNow(15_000);
+  const now = useNow(10_000);
 
   const refresh = useCallback(async () => {
     try {
@@ -33,68 +36,97 @@ export function LiveDisplay({ initial }: { initial: DisplayView | null }) {
 
   if (!view) {
     return (
-      <main className="display">
-        <h1>Fila Viva</h1>
-        <p className="callout warn">Conectando con la sucursal…</p>
+      <main className="display stack">
+        <Brand />
+        <p className="callout warn">
+          <Clock3 size={18} aria-hidden /> Conectando con la sucursal…
+        </p>
       </main>
     );
   }
 
+  const calling = view.serving.filter((item) => item.status === 'called');
+  const attending = view.serving.filter((item) => item.status !== 'called');
+
   return (
     <main className="display stack">
       <header className="spread">
-        <div>
-          <h1 style={{ margin: 0 }}>{view.institutionName}</h1>
-          <p className="muted">Turnos en atención</p>
-        </div>
+        <Brand subtitle={view.institutionName} />
         <div style={{ textAlign: 'right' }}>
-          <div style={{ fontSize: '2rem', fontWeight: 700 }}>
+          <div className="clock" suppressHydrationWarning>
             {new Date(now).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}
           </div>
-          <span className={`chip ${connected ? 'live' : 'down'}`}>{connected ? '● En vivo' : '○ Reconectando…'}</span>
+          <span className={`chip ${connected ? 'live' : 'down'}`}>
+            <span className="dot" />
+            {connected ? 'En vivo' : 'Reconectando…'}
+          </span>
         </div>
       </header>
 
-      {view.serving.length === 0 ? (
-        <p className="card muted">En este momento no hay turnos llamados.</p>
-      ) : (
-        <section className="serving" aria-live="polite">
-          {view.serving.map((item) => (
-            <div key={item.ticketCode} className={`card ${item.status === 'called' ? 'accent' : ''}`}>
-              <div className="code">{item.ticketCode}</div>
-              <div className="big-window">Ventanilla {item.windowNumber}</div>
-              <p className="muted small">{item.status === 'called' ? 'Pase ahora' : 'En atención'}</p>
-            </div>
-          ))}
-        </section>
-      )}
+      <section>
+        <h2 className="row" style={{ gap: 8 }}>
+          <BellRing size={22} aria-hidden /> Llamando ahora
+        </h2>
+        {view.serving.length === 0 ? (
+          <div className="card empty">
+            <Volume2 size={34} aria-hidden />
+            <p>En este momento no hay turnos llamados.</p>
+          </div>
+        ) : (
+          <div className="serving" aria-live="assertive">
+            {[...calling, ...attending].map((item) => (
+              <div key={item.ticketCode} className={`card ${item.status === 'called' ? 'calling' : 'flat'}`}>
+                <div className="code">{item.ticketCode}</div>
+                <div className="row" style={{ justifyContent: 'center', gap: 6 }}>
+                  <span className="small ink-2" style={{ fontWeight: 700 }}>
+                    Ventanilla
+                  </span>
+                  <span style={{ fontSize: '2rem', fontWeight: 800 }}>{item.windowNumber}</span>
+                </div>
+                <span className={`chip ${item.status === 'called' ? 'live' : ''}`}>
+                  {item.status === 'called' ? 'Pase ahora' : 'En atención'}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
 
-      <div className="grid two">
+      <div className="grid wide-left" style={{ alignItems: 'start' }}>
         <section className="card">
-          <h2>Próximos turnos</h2>
+          <h2 className="row" style={{ gap: 8 }}>
+            <ListOrdered size={20} aria-hidden /> Próximos turnos
+          </h2>
           {view.upcoming.length === 0 ? (
             <p className="muted">No hay personas esperando.</p>
           ) : (
-            <p style={{ fontSize: '1.4rem', fontWeight: 700, letterSpacing: '0.03em' }}>
-              {view.upcoming.map((item) => item.ticketCode).join('   ·   ')}
-            </p>
+            <div className="ticker">
+              {view.upcoming.map((item) => (
+                <span key={item.ticketCode} title={item.serviceTypeName}>
+                  {item.ticketCode}
+                </span>
+              ))}
+            </div>
           )}
         </section>
         <section className="card ai">
-          <h2>Espera estimada por trámite</h2>
-          <table>
-            <tbody>
-              {view.queues.map((queue) => (
-                <tr key={queue.serviceTypeId}>
-                  <td>
-                    {queue.prefix} · {queue.name}
-                  </td>
-                  <td>{queue.waiting} en fila</td>
-                  <td style={{ color: 'var(--teal)' }}>{formatMinutes(queue.estimatedWaitMinutes)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <h2 className="row" style={{ gap: 8 }}>
+            <Clock3 size={20} aria-hidden /> Espera estimada
+          </h2>
+          <div className="stack tight">
+            {view.queues.map((queue) => (
+              <div key={queue.serviceTypeId} className="spread">
+                <span className="row nowrap small" style={{ gap: 8 }}>
+                  <span className="icon-badge" style={{ width: 30, height: 30, borderRadius: 9 }}>
+                    <ServiceIcon prefix={queue.prefix} size={15} />
+                  </span>
+                  {queue.name}
+                  <span className="muted tiny">· {queue.waiting} en fila</span>
+                </span>
+                <span className="wait-pill">{formatMinutes(queue.estimatedWaitMinutes)}</span>
+              </div>
+            ))}
+          </div>
         </section>
       </div>
     </main>
