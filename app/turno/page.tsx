@@ -14,9 +14,12 @@ export default async function TakeTurnPage() {
   const { institution, serviceTypes } = await loadCatalog(revalidate);
   return (
     <main className="page">
-      <Brand subtitle={institution?.name} />
+      <div className="topbar">
+        <Brand subtitle={institution?.name} />
+      </div>
+      <span className="eyebrow">Paso 1 de 2</span>
       <h1>¿Qué trámite vas a hacer?</h1>
-      <p className="muted">Elige uno para ver la espera real estimada y tomar tu turno.</p>
+      <p className="ink-2">Elige uno: verás la espera real estimada antes de tomar tu turno.</p>
       <ServicePicker initialInstitution={institution} initialServiceTypes={serviceTypes} />
     </main>
   );

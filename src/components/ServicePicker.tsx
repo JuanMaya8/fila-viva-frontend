@@ -1,18 +1,22 @@
 'use client';
 
+import { AlertCircle, ArrowRight, Clock3, Inbox, RotateCw, Ticket, Users } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSocket } from '../hooks/useSocket';
 import { recallTurn, rememberTurn } from '../lib/active-turn';
 import { api, ApiError, pickInstitution } from '../lib/api';
 import { CONGESTION_LABEL, formatMinutes } from '../lib/format';
 import type { Institution, PublicServiceType, QueueSummary } from '../lib/types';
+import { ServiceIcon } from './ui/visuals';
 
 interface Props {
   initialInstitution: Institution | null;
   initialServiceTypes: PublicServiceType[];
 }
+
+type SortMode = 'duration' | 'wait';
 
 export function ServicePicker({ initialInstitution, initialServiceTypes }: Props) {
   const router = useRouter();
@@ -23,6 +27,7 @@ export function ServicePicker({ initialInstitution, initialServiceTypes }: Props
   const [loadError, setLoadError] = useState<string | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
   const [preferential, setPreferential] = useState(false);
+  const [sort, setSort] = useState<SortMode>('duration');
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [activeTurnId, setActiveTurnId] = useState<string | null>(null);
@@ -87,6 +92,16 @@ export function ServicePicker({ initialInstitution, initialServiceTypes }: Props
     };
   }, [socket, typeIds]);
 
+  const sorted = useMemo(
+    () =>
+      [...types].sort((a, b) =>
+        sort === 'wait'
+          ? (a.estimatedWaitMinutes ?? Infinity) - (b.estimatedWaitMinutes ?? Infinity)
+          : a.avgServiceTimeMinutes - b.avgServiceTimeMinutes,
+      ),
+    [types, sort],
+  );
+
   async function takeTurn() {
     if (!institution || !selected) {
       return;
@@ -108,13 +123,25 @@ export function ServicePicker({ initialInstitution, initialServiceTypes }: Props
   return (
     <>
       {activeTurnId && (
-        <Link href={`/turno/${activeTurnId}`} className="button secondary block" style={{ margin: '1rem 0' }}>
-          Ver mi turno activo
+        <Link href={`/turno/${activeTurnId}`} className="button secondary block" style={{ margin: '1rem 0 0' }}>
+          <Ticket size={18} aria-hidden /> Ver mi turno activo
         </Link>
       )}
 
+      <div className="spread" style={{ margin: '1.25rem 0 0.75rem' }}>
+        <span className="small muted">{types.length} trámites disponibles</span>
+        <div className="segmented" role="group" aria-label="Ordenar trámites">
+          <button className={sort === 'duration' ? 'on' : ''} onClick={() => setSort('duration')}>
+            Más rápidos
+          </button>
+          <button className={sort === 'wait' ? 'on' : ''} onClick={() => setSort('wait')}>
+            Menor espera
+          </button>
+        </div>
+      </div>
+
       {loading && (
-        <div className="stack" style={{ marginTop: '1rem' }}>
+        <div className="stack">
           <div className="skeleton" />
           <div className="skeleton" />
           <div className="skeleton" />
@@ -122,70 +149,92 @@ export function ServicePicker({ initialInstitution, initialServiceTypes }: Props
       )}
 
       {!loading && loadError && (
-        <div className="callout error" style={{ marginTop: '1rem' }} role="alert">
-          <p>{loadError}</p>
-          <button className="secondary" onClick={() => void refresh()} style={{ marginTop: '0.6rem' }}>
-            Reintentar
-          </button>
+        <div className="callout error" role="alert">
+          <AlertCircle size={18} aria-hidden />
+          <div className="stack tight">
+            <span>{loadError}</span>
+            <button className="secondary" onClick={() => void refresh()}>
+              <RotateCw size={16} aria-hidden /> Reintentar
+            </button>
+          </div>
         </div>
       )}
 
       {!loading && !loadError && types.length === 0 && (
-        <p className="callout warn" style={{ marginTop: '1rem' }}>
-          Por ahora no hay trámites disponibles en esta sucursal.
-        </p>
+        <div className="card empty">
+          <Inbox size={32} aria-hidden />
+          <p>Por ahora no hay trámites disponibles en esta sucursal.</p>
+        </div>
       )}
 
-      <div className="stack" style={{ marginTop: '1rem' }} role="radiogroup" aria-label="Trámites">
-        {types.map((type) => (
+      <div className="stack" role="radiogroup" aria-label="Trámites">
+        {sorted.map((type) => (
           <button
             key={type.id}
             type="button"
             role="radio"
             aria-checked={selected === type.id}
-            className={`choice ${selected === type.id ? 'selected' : ''}`}
+            className={`choice fade-in ${selected === type.id ? 'selected' : ''}`}
             onClick={() => setSelected(type.id)}
           >
+            <span className="icon-badge">
+              <ServiceIcon prefix={type.prefix} />
+            </span>
             <span className="spread">
               <strong>{type.name}</strong>
-              {type.congestionLevel && (
-                <span className={`chip ${type.congestionLevel}`}>{CONGESTION_LABEL[type.congestionLevel]}</span>
-              )}
-            </span>
-            <span className="muted small">{type.description}</span>
-            <span className="row small">
-              <span>Duración típica: {formatMinutes(type.avgServiceTimeMinutes)}</span>
-              <span className="muted">·</span>
-              <span style={{ color: 'var(--teal)' }}>
-                Espera actual:{' '}
-                {type.activeAdvisors === 0 && type.estimatedWaitMinutes !== null
-                  ? `~${formatMinutes(type.estimatedWaitMinutes)} (sin asesores activos)`
-                  : `~${formatMinutes(type.estimatedWaitMinutes)}`}
+              <span className="wait-pill" title="Espera estimada si tomas turno ahora">
+                <Clock3 size={14} aria-hidden />~{formatMinutes(type.estimatedWaitMinutes)}
               </span>
             </span>
-            <span className="muted small">{type.waiting} persona(s) en fila</span>
+            <span className="muted small">{type.description}</span>
+            <span className="row tiny ink-2">
+              <span>Atención típica: {formatMinutes(type.avgServiceTimeMinutes)}</span>
+              <span className="row" style={{ gap: 4 }}>
+                <Users size={13} aria-hidden /> {type.waiting} en fila
+              </span>
+              {type.activeAdvisors === 0 ? (
+                <span className="chip high">Sin asesores ahora</span>
+              ) : (
+                type.congestionLevel && (
+                  <span className={`chip ${type.congestionLevel}`}>{CONGESTION_LABEL[type.congestionLevel]}</span>
+                )
+              )}
+            </span>
           </button>
         ))}
       </div>
 
       {types.length > 0 && (
         <div className="sticky-bottom">
-          <div className="stack">
-            <label className="check">
+          <div className="stack tight">
+            <label className="switch">
+              Atención preferencial
               <input
                 type="checkbox"
                 checked={preferential}
                 onChange={(e) => setPreferential(e.target.checked)}
+                aria-describedby="preferential-help"
               />
-              Atención preferencial (adulto mayor, embarazo, discapacidad)
             </label>
+            <p id="preferential-help" className="tiny muted" style={{ margin: 0 }}>
+              Adultos mayores, embarazo o discapacidad.
+            </p>
             {submitError && (
               <p className="callout error" role="alert">
+                <AlertCircle size={18} aria-hidden />
                 {submitError}
               </p>
             )}
             <button className="big block" disabled={!chosen || submitting} onClick={() => void takeTurn()}>
-              {submitting ? 'Tomando turno…' : chosen ? `Tomar turno: ${chosen.name}` : 'Elige un trámite'}
+              {submitting ? (
+                'Tomando turno…'
+              ) : chosen ? (
+                <>
+                  Tomar turno · {chosen.name} <ArrowRight size={20} aria-hidden />
+                </>
+              ) : (
+                'Elige un trámite'
+              )}
             </button>
           </div>
         </div>
