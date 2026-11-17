@@ -96,7 +96,7 @@ export function LiveDisplay({ initial }: { initial: DisplayView | null }) {
       </section>
 
       <div className="grid wide-left" style={{ alignItems: 'start' }}>
-        <section className="card">
+        <section className="card" style={{ minWidth: 0 }}>
           <h2 className="row" style={{ gap: 8 }}>
             <ListOrdered size={20} aria-hidden /> Próximos turnos
           </h2>
@@ -112,21 +112,24 @@ export function LiveDisplay({ initial }: { initial: DisplayView | null }) {
             </div>
           )}
         </section>
-        <section className="card ai">
+        <section className="card ai" style={{ minWidth: 0 }}>
           <h2 className="row" style={{ gap: 8 }}>
             <Clock3 size={20} aria-hidden /> Espera estimada
           </h2>
           <div className="stack tight">
             {view.queues.map((queue) => (
-              <div key={queue.serviceTypeId} className="spread">
-                <span className="row nowrap small" style={{ gap: 8 }}>
+              <div key={queue.serviceTypeId} className="spread" style={{ flexWrap: 'nowrap' }}>
+                <span className="row nowrap small" style={{ gap: 8, minWidth: 0, flex: 1 }}>
                   <span className="icon-badge" style={{ width: 30, height: 30, borderRadius: 9 }}>
                     <ServiceIcon prefix={queue.prefix} size={15} />
                   </span>
-                  {queue.name}
-                  <span className="muted tiny">· {queue.waiting} en fila</span>
+                  <span style={{ minWidth: 0 }}>
+                    {queue.name} <span className="muted tiny">· {queue.waiting} en fila</span>
+                  </span>
                 </span>
-                <span className="wait-pill">{formatMinutes(queue.estimatedWaitMinutes)}</span>
+                <span className="wait-pill" style={{ flexShrink: 0 }}>
+                  {formatMinutes(queue.estimatedWaitMinutes)}
+                </span>
               </div>
             ))}
           </div>
