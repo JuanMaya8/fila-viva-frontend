@@ -35,7 +35,16 @@ El orden de arranque y el guion de demo están en `README-GENERAL.md`, en la car
 
 **PWA.** `public/manifest.webmanifest`, íconos SVG y `public/sw.js`: precachea la portada, `/turno` y una página sin conexión, y sirve los assets estáticos desde caché. Nunca cachea la API, los sockets ni las pantallas autenticadas. El service worker se registra solo en producción.
 
-**UX.** Mobile-first, estados de carga (skeletons), vacíos y error con mensajes claros en español (`src/lib/api.ts` traduce los códigos HTTP sin exponer detalles del servidor), paleta oscura (`#0B141C`, ámbar `#F0A431`, teal `#33C7B6`) y respeto por `prefers-reduced-motion`.
+**Diseño.** Tema claro y cálido definido con tokens CSS en `app/globals.css`: fondo crema `#FBF6EE`, superficies `#FFFDF9`, tinta café `#2B2118`, primario terracota `#C2541F`, miel `#E9A23B` y azul petróleo `#1E7FA8` para todo lo que viene de la IA. Tipografía Plus Jakarta Sans (`next/font`) e íconos de `lucide-react`. Los colores de los gráficos (IA `#1E7FA8`, tradicional `#B7791F`, real `#B83A6B`) se validaron por luminosidad, croma, separación para daltonismo y contraste sobre la superficie.
+
+**Interfaz.** Mobile-first, con estados de carga (skeletons), vacíos y de error con mensajes en español (`src/lib/api.ts` traduce los códigos HTTP sin exponer detalles del servidor). Incluye:
+- **Ficha en vivo:** boleto destacado, línea de estado (en fila → llamado → en atención → listo), anillo de cuenta regresiva, personas delante dibujadas, rango probable p10–p90 y comparación IA vs. tradicional.
+- **Avisos:** toasts en la app, notificaciones del sistema y botón para compartir el enlace del turno.
+- **Selección de trámite:** orden por "más rápidos" o "menor espera".
+- **Panel del asesor:** anillo del tiempo de atención frente al esperado, barra de pasos y atajo de teclado **N** para llamar siguiente.
+- **Tablero del admin:** KPIs, gráfico de espera por trámite y gráfico IA / tradicional / real con tooltip, leyenda y vista de tabla.
+- **Pantalla de sala:** llamados resaltados con pulso.
+- **Accesibilidad:** se respeta `prefers-reduced-motion`.
 
 ## 3. Cómo correrlo (Windows, PowerShell)
 
