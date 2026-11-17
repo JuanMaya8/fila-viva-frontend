@@ -1,9 +1,11 @@
 'use client';
 
+import { AlertCircle, CheckCircle2, KeyRound, Pencil, Power, UserPlus, UsersRound } from 'lucide-react';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { api, ApiError } from '../../lib/api';
 import { AGENT_STATUS_LABEL } from '../../lib/format';
 import type { AgentAdminView, ServiceType } from '../../lib/types';
+import { initials } from '../../lib/visual';
 
 interface FormState {
   fullName: string;
@@ -145,7 +147,12 @@ export function AdvisorsTab({ serviceTypes }: { serviceTypes: ServiceType[] }) {
   return (
     <div className="grid two">
       <section className="card">
-        <h2>{editingId ? 'Editar asesor' : 'Nuevo asesor'}</h2>
+        <div className="card-title">
+          <span className="icon-badge">
+            {editingId ? <Pencil size={20} aria-hidden /> : <UserPlus size={20} aria-hidden />}
+          </span>
+          <h2 style={{ margin: 0 }}>{editingId ? 'Editar asesor' : 'Nuevo asesor'}</h2>
+        </div>
         <form className="stack" onSubmit={submit}>
           <label>
             Nombre completo
@@ -216,10 +223,16 @@ export function AdvisorsTab({ serviceTypes }: { serviceTypes: ServiceType[] }) {
           </fieldset>
           {error && (
             <p className="callout error" role="alert">
+              <AlertCircle size={18} aria-hidden />
               {error}
             </p>
           )}
-          {info && <p className="callout go">{info}</p>}
+          {info && (
+            <p className="callout go">
+              <CheckCircle2 size={18} aria-hidden />
+              {info}
+            </p>
+          )}
           <div className="row">
             <button type="submit" disabled={saving}>
               {saving ? 'Guardando…' : editingId ? 'Guardar cambios' : 'Crear asesor'}
@@ -234,7 +247,12 @@ export function AdvisorsTab({ serviceTypes }: { serviceTypes: ServiceType[] }) {
       </section>
 
       <section className="card">
-        <h2>Asesores</h2>
+        <div className="card-title">
+          <span className="icon-badge success">
+            <UsersRound size={20} aria-hidden />
+          </span>
+          <h2 style={{ margin: 0 }}>Asesores</h2>
+        </div>
         {agents === null ? (
           <div className="skeleton" />
         ) : agents.length === 0 ? (
@@ -242,13 +260,16 @@ export function AdvisorsTab({ serviceTypes }: { serviceTypes: ServiceType[] }) {
         ) : (
           <div className="stack">
             {agents.map((agent) => (
-              <article key={agent.id} className="card" style={{ margin: 0, opacity: agent.active ? 1 : 0.6 }}>
+              <article key={agent.id} className="card flat" style={{ margin: 0, opacity: agent.active ? 1 : 0.6 }}>
                 <div className="spread">
-                  <div>
+                  <div className="row" style={{ gap: '0.7rem' }}>
+                    <span className="avatar">{initials(agent.fullName)}</span>
+                    <div>
                     <strong>
                       Ventanilla {agent.windowNumber} · {agent.fullName}
                     </strong>
                     <p className="muted small">{agent.email}</p>
+                    </div>
                   </div>
                   <span className={`chip ${agent.status}`}>
                     {agent.active ? AGENT_STATUS_LABEL[agent.status] : 'Inactivo'}
@@ -259,13 +280,13 @@ export function AdvisorsTab({ serviceTypes }: { serviceTypes: ServiceType[] }) {
                 </p>
                 <div className="row">
                   <button className="secondary" onClick={() => edit(agent)}>
-                    Editar
+                    <Pencil size={16} aria-hidden /> Editar
                   </button>
                   <button className="secondary" onClick={() => void resetPassword(agent)}>
-                    Resetear contraseña
+                    <KeyRound size={16} aria-hidden /> Resetear contraseña
                   </button>
-                  <button className={agent.active ? 'danger' : 'teal'} onClick={() => void toggleActive(agent)}>
-                    {agent.active ? 'Desactivar' : 'Activar'}
+                  <button className={agent.active ? 'danger' : 'success'} onClick={() => void toggleActive(agent)}>
+                    <Power size={16} aria-hidden /> {agent.active ? 'Desactivar' : 'Activar'}
                   </button>
                 </div>
               </article>

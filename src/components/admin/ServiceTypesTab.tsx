@@ -1,9 +1,11 @@
 'use client';
 
+import { AlertCircle, CheckCircle2, ListPlus, Pencil, Plus, Power, Trash2 } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import { api, ApiError } from '../../lib/api';
 import { formatMinutes } from '../../lib/format';
 import type { ServiceType } from '../../lib/types';
+import { ServiceIcon } from '../ui/visuals';
 
 interface FormState {
   name: string;
@@ -115,7 +117,12 @@ export function ServiceTypesTab({ serviceTypes, onChanged }: Props) {
   return (
     <div className="grid two">
       <section className="card">
-        <h2>{editingId ? 'Editar trámite' : 'Nuevo trámite'}</h2>
+        <div className="card-title">
+          <span className="icon-badge honey">
+            {editingId ? <Pencil size={20} aria-hidden /> : <ListPlus size={20} aria-hidden />}
+          </span>
+          <h2 style={{ margin: 0 }}>{editingId ? 'Editar trámite' : 'Nuevo trámite'}</h2>
+        </div>
         <form className="stack" onSubmit={submit}>
           <label>
             Nombre
@@ -178,7 +185,7 @@ export function ServiceTypesTab({ serviceTypes, onChanged }: Props) {
                   disabled={form.steps.length === 1}
                   onClick={() => removeStep(index)}
                 >
-                  ✕
+                  <Trash2 size={16} />
                 </button>
               </div>
             ))}
@@ -188,15 +195,21 @@ export function ServiceTypesTab({ serviceTypes, onChanged }: Props) {
               disabled={form.steps.length >= 12}
               onClick={() => setForm({ ...form, steps: [...form.steps, { name: '' }] })}
             >
-              Agregar paso
+              <Plus size={16} aria-hidden /> Agregar paso
             </button>
           </fieldset>
           {error && (
             <p className="callout error" role="alert">
+              <AlertCircle size={18} aria-hidden />
               {error}
             </p>
           )}
-          {info && <p className="callout go">{info}</p>}
+          {info && (
+            <p className="callout go">
+              <CheckCircle2 size={18} aria-hidden />
+              {info}
+            </p>
+          )}
           <div className="row">
             <button type="submit" disabled={saving}>
               {saving ? 'Guardando…' : editingId ? 'Guardar cambios' : 'Crear trámite'}
@@ -217,20 +230,25 @@ export function ServiceTypesTab({ serviceTypes, onChanged }: Props) {
         ) : (
           <div className="stack">
             {serviceTypes.map((type) => (
-              <article key={type.id} className="card" style={{ margin: 0, opacity: type.active ? 1 : 0.6 }}>
+              <article key={type.id} className="card flat" style={{ margin: 0, opacity: type.active ? 1 : 0.6 }}>
                 <div className="spread">
-                  <strong>
-                    {type.prefix} · {type.name}
-                  </strong>
+                  <div className="row" style={{ gap: '0.6rem' }}>
+                    <span className="icon-badge" style={{ width: 34, height: 34 }}>
+                      <ServiceIcon prefix={type.prefix} size={17} />
+                    </span>
+                    <strong>
+                      {type.prefix} · {type.name}
+                    </strong>
+                  </div>
                   <span className="chip">{formatMinutes(type.avgServiceTimeMinutes)}</span>
                 </div>
                 <p className="muted small">{type.steps.length} pasos · {type.description}</p>
                 <div className="row" style={{ marginTop: '0.5rem' }}>
                   <button className="secondary" onClick={() => edit(type)}>
-                    Editar
+                    <Pencil size={16} aria-hidden /> Editar
                   </button>
-                  <button className={type.active ? 'danger' : 'teal'} onClick={() => void toggleActive(type)}>
-                    {type.active ? 'Desactivar' : 'Activar'}
+                  <button className={type.active ? 'danger' : 'success'} onClick={() => void toggleActive(type)}>
+                    <Power size={16} aria-hidden /> {type.active ? 'Desactivar' : 'Activar'}
                   </button>
                 </div>
               </article>

@@ -1,5 +1,6 @@
 'use client';
 
+import { AlertCircle, LayoutDashboard, ListChecks, UsersRound } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import { useSocket } from '../../hooks/useSocket';
@@ -13,10 +14,10 @@ import { ServiceTypesTab } from './ServiceTypesTab';
 
 type Tab = 'dashboard' | 'advisors' | 'services';
 
-const TABS: Array<{ id: Tab; label: string }> = [
-  { id: 'dashboard', label: 'Tablero' },
-  { id: 'advisors', label: 'Asesores' },
-  { id: 'services', label: 'Trámites' },
+const TABS = [
+  { id: 'dashboard' as const, label: 'Tablero', icon: LayoutDashboard },
+  { id: 'advisors' as const, label: 'Asesores', icon: UsersRound },
+  { id: 'services' as const, label: 'Trámites', icon: ListChecks },
 ];
 
 export function AdminPanel() {
@@ -45,35 +46,41 @@ export function AdminPanel() {
   return (
     <>
       <div className="topbar">
-        <Brand subtitle="Administración" />
+        <Brand subtitle="Panel de administración" />
         <div className="row">
-          <span className={`chip ${connected ? 'live' : 'down'}`}>{connected ? '● En vivo' : '○ Reconectando…'}</span>
+          <span className={`chip ${connected ? 'live' : 'down'}`}>
+            <span className="dot" />
+            {connected ? 'En vivo' : 'Reconectando…'}
+          </span>
           <LogoutButton />
         </div>
       </div>
 
       <nav className="tabs" aria-label="Secciones">
-        {TABS.map((item) => (
+        {TABS.map(({ id, label, icon: Icon }) => (
           <button
-            key={item.id}
-            className={tab === item.id ? 'active' : ''}
-            aria-current={tab === item.id ? 'page' : undefined}
-            onClick={() => setTab(item.id)}
+            key={id}
+            className={tab === id ? 'active' : ''}
+            aria-current={tab === id ? 'page' : undefined}
+            onClick={() => setTab(id)}
           >
-            {item.label}
+            <Icon size={17} aria-hidden /> {label}
           </button>
         ))}
       </nav>
 
       {error && (
         <p className="callout error" role="alert">
+          <AlertCircle size={18} aria-hidden />
           {error}
         </p>
       )}
 
-      {tab === 'dashboard' && <DashboardTab socket={socket} serviceTypes={serviceTypes} />}
-      {tab === 'advisors' && <AdvisorsTab serviceTypes={serviceTypes} />}
-      {tab === 'services' && <ServiceTypesTab serviceTypes={serviceTypes} onChanged={loadServiceTypes} />}
+      <div className="fade-in" key={tab}>
+        {tab === 'dashboard' && <DashboardTab socket={socket} serviceTypes={serviceTypes} />}
+        {tab === 'advisors' && <AdvisorsTab serviceTypes={serviceTypes} />}
+        {tab === 'services' && <ServiceTypesTab serviceTypes={serviceTypes} onChanged={loadServiceTypes} />}
+      </div>
     </>
   );
 }
