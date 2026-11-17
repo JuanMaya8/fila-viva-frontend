@@ -1,5 +1,17 @@
 'use client';
 
+import {
+  AlertCircle,
+  BrainCircuit,
+  CheckCheck,
+  Coffee,
+  Megaphone,
+  PlayCircle,
+  SkipForward,
+  UserCheck,
+  UserX,
+  Users,
+} from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNow } from '../hooks/useNow';
@@ -7,16 +19,19 @@ import { useRoom, useSocket } from '../hooks/useSocket';
 import { api, ApiError } from '../lib/api';
 import { AGENT_STATUS_LABEL, CONGESTION_LABEL, formatCountdown, formatMinutes } from '../lib/format';
 import type { AdvisorCurrentTurn, AdvisorView } from '../lib/types';
+import { initials } from '../lib/visual';
 import { LogoutButton } from './LogoutButton';
+import { useToast } from './ui/Toaster';
+import { ProgressRing, ServiceIcon } from './ui/visuals';
 
 const NOTES_DEBOUNCE_MS = 800;
 
 export function AdvisorPanel() {
   const router = useRouter();
+  const toast = useToast();
   const { socket, connected } = useSocket(true);
   const [view, setView] = useState<AdvisorView | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [info, setInfo] = useState<string | null>(null);
   const [pending, setPending] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -38,28 +53,34 @@ export function AdvisorPanel() {
 
   useRoom<AdvisorView>(socket, null, 'advisorUpdate', setView, () => void load());
 
-  async function run(label: string, action: () => Promise<unknown>) {
-    setPending(label);
-    setError(null);
-    setInfo(null);
-    try {
-      await action();
-      await load();
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'No se pudo completar la acción.');
-    } finally {
-      setPending(null);
-    }
-  }
-
-  async function callNext() {
-    await run('call', async () => {
-      const { turn } = await api.callNext();
-      if (!turn) {
-        setInfo('No hay turnos en espera para tus trámites.');
+  const run = useCallback(
+    async (label: string, action: () => Promise<unknown>) => {
+      setPending(label);
+      setError(null);
+      try {
+        await action();
+        await load();
+      } catch (err) {
+        setError(err instanceof ApiError ? err.message : 'No se pudo completar la acción.');
+      } finally {
+        setPending(null);
       }
-    });
-  }
+    },
+    [load],
+  );
+
+  const callNext = useCallback(
+    () =>
+      run('call', async () => {
+        const { turn } = await api.callNext();
+        toast(
+          turn
+            ? { tone: 'success', title: `Llamando a ${turn.ticketCode}`, body: turn.serviceTypeName }
+            : { tone: 'info', title: 'No hay turnos en espera', body: 'Nadie espera en tus trámites.' },
+        );
+      }),
+    [run, toast],
+  );
 
   async function complete(callNextAfter: boolean) {
     const current = view?.currentTurn;
@@ -68,16 +89,36 @@ export function AdvisorPanel() {
     }
     await run(callNextAfter ? 'complete-next' : 'complete', async () => {
       const { next } = await api.completeTurn(current.id, callNextAfter);
-      if (callNextAfter && !next) {
-        setInfo('Atención finalizada. No hay más turnos en espera.');
-      }
+      toast(
+        callNextAfter && next
+          ? { tone: 'success', title: `${current.ticketCode} finalizado`, body: `Llamando a ${next.ticketCode}` }
+          : { tone: 'success', title: `${current.ticketCode} finalizado` },
+      );
     });
   }
+
+  // Keyboard shortcut: N calls the next turn when the advisor is free.
+  const canCall = view?.status === 'available' && !view.currentTurn && pending === null;
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) {
+        return;
+      }
+      if (event.key.toLowerCase() === 'n' && canCall) {
+        event.preventDefault();
+        void callNext();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [canCall, callNext]);
 
   if (!view) {
     return error ? (
       <div className="stack">
         <p className="callout error" role="alert">
+          <AlertCircle size={18} aria-hidden />
           {error}
         </p>
         <button onClick={() => void load()}>Reintentar</button>
@@ -85,63 +126,70 @@ export function AdvisorPanel() {
     ) : (
       <div className="stack" aria-busy>
         <div className="skeleton" />
-        <div className="skeleton" style={{ minHeight: 220 }} />
+        <div className="skeleton" style={{ minHeight: 260 }} />
       </div>
     );
   }
 
   const current = view.currentTurn;
-  const canChangeStatus = !current;
+  const waitingTotal = view.queues.reduce((sum, q) => sum + q.waiting, 0);
 
   return (
-    <div className="stack">
-      <header className="topbar">
-        <div>
-          <h1 style={{ margin: 0 }}>Ventanilla {view.windowNumber}</h1>
-          <p className="muted small">{view.fullName}</p>
-        </div>
-        <div className="row">
-          <span className={`chip ${connected ? 'live' : 'down'}`}>{connected ? '● En vivo' : '○ Reconectando…'}</span>
-          <LogoutButton />
-        </div>
-      </header>
-
-      <section className="card">
+    <div className="stack fade-in">
+      <header className="card">
         <div className="spread">
-          <div>
-            <p className="muted small">Tu estado</p>
-            <span className={`chip ${view.status}`}>{AGENT_STATUS_LABEL[view.status]}</span>
+          <div className="row" style={{ gap: '0.8rem' }}>
+            <span className="avatar">{initials(view.fullName)}</span>
+            <div>
+              <h1 style={{ fontSize: '1.3rem', margin: 0 }}>Ventanilla {view.windowNumber}</h1>
+              <p className="muted small" style={{ margin: 0 }}>
+                {view.fullName}
+              </p>
+            </div>
           </div>
           <div className="row">
+            <span className={`chip ${connected ? 'live' : 'down'}`}>
+              <span className="dot" />
+              {connected ? 'En vivo' : 'Reconectando…'}
+            </span>
+            <LogoutButton />
+          </div>
+        </div>
+        <hr className="divider" />
+        <div className="spread">
+          <span className="small ink-2">
+            Estado: <span className={`chip ${view.status}`}>{AGENT_STATUS_LABEL[view.status]}</span>
+          </span>
+          <div className="segmented" role="group" aria-label="Cambiar estado">
             <button
-              className={view.status === 'available' ? 'teal' : 'secondary'}
-              disabled={!canChangeStatus || pending !== null || view.status === 'available'}
+              className={view.status === 'available' ? 'on available' : ''}
+              disabled={Boolean(current) || pending !== null}
               onClick={() => void run('status', () => api.setMyStatus('available'))}
             >
-              Disponible
+              <UserCheck size={16} aria-hidden /> Disponible
             </button>
             <button
-              className="secondary"
-              disabled={!canChangeStatus || pending !== null || view.status === 'on_break'}
+              className={view.status === 'on_break' ? 'on on_break' : ''}
+              disabled={Boolean(current) || pending !== null}
               onClick={() => void run('status', () => api.setMyStatus('on_break'))}
             >
-              En pausa
+              <Coffee size={16} aria-hidden /> En pausa
             </button>
           </div>
         </div>
-        {!canChangeStatus && (
-          <p className="muted small" style={{ marginTop: '0.5rem' }}>
+        {current && (
+          <p className="tiny muted" style={{ marginTop: 6 }}>
             Finaliza la atención actual para cambiar tu estado.
           </p>
         )}
-      </section>
+      </header>
 
       {error && (
         <p className="callout error" role="alert">
+          <AlertCircle size={18} aria-hidden />
           {error}
         </p>
       )}
-      {info && <p className="callout warn">{info}</p>}
 
       {current ? (
         <CurrentTurnCard
@@ -149,52 +197,71 @@ export function AdvisorPanel() {
           turn={current}
           absentTimeoutMinutes={view.absentTimeoutMinutes}
           pending={pending}
-          onStart={() => void run('start', () => api.startTurn(current.id))}
-          onAbsent={() => void run('absent', () => api.markAbsent(current.id))}
+          onStart={() =>
+            void run('start', async () => {
+              await api.startTurn(current.id);
+              toast({ tone: 'info', title: `Atendiendo a ${current.ticketCode}` });
+            })
+          }
+          onAbsent={() =>
+            void run('absent', async () => {
+              await api.markAbsent(current.id);
+              toast({ tone: 'warn', title: `${current.ticketCode} marcado ausente` });
+            })
+          }
           onComplete={(next) => void complete(next)}
           onError={setError}
         />
       ) : (
-        <button
-          className="big block"
-          disabled={view.status !== 'available' || pending !== null}
-          onClick={() => void callNext()}
-        >
-          {pending === 'call' ? 'Llamando…' : 'Llamar siguiente'}
-        </button>
-      )}
-      {!current && view.status !== 'available' && (
-        <p className="muted small">Ponte en Disponible para llamar al siguiente turno.</p>
+        <section className="card accent stack" style={{ textAlign: 'center' }}>
+          <span className="icon-badge" style={{ margin: '0 auto', width: 56, height: 56 }}>
+            <Megaphone size={26} aria-hidden />
+          </span>
+          <div>
+            <h2 style={{ margin: 0 }}>{waitingTotal > 0 ? `${waitingTotal} en espera` : 'Sin personas en espera'}</h2>
+            <p className="small muted">
+              {view.status === 'available'
+                ? 'Llama al siguiente turno de tus trámites.'
+                : 'Ponte en Disponible para llamar turnos.'}
+            </p>
+          </div>
+          <button className="big block" disabled={!canCall} onClick={() => void callNext()}>
+            <SkipForward size={20} aria-hidden />
+            {pending === 'call' ? 'Llamando…' : 'Llamar siguiente'}
+          </button>
+          <p className="tiny muted">
+            Atajo: <span className="kbd">N</span>
+          </p>
+        </section>
       )}
 
       <section className="card">
-        <h2>Tus filas</h2>
+        <div className="card-title">
+          <span className="icon-badge honey">
+            <Users size={20} aria-hidden />
+          </span>
+          <h2 style={{ margin: 0 }}>Tus filas</h2>
+        </div>
         {view.queues.length === 0 ? (
           <p className="muted small">Sin datos de filas por ahora.</p>
         ) : (
-          <div className="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Trámite</th>
-                  <th>En fila</th>
-                  <th>Espera nueva</th>
-                  <th>Estado</th>
-                </tr>
-              </thead>
-              <tbody>
-                {view.queues.map((queue) => (
-                  <tr key={queue.serviceTypeId}>
-                    <td>{queue.name}</td>
-                    <td>{queue.waiting}</td>
-                    <td>{formatMinutes(queue.estimatedWaitMinutes)}</td>
-                    <td>
-                      <span className={`chip ${queue.congestionLevel}`}>{CONGESTION_LABEL[queue.congestionLevel]}</span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="stack tight">
+            {view.queues.map((queue) => (
+              <div key={queue.serviceTypeId} className="spread" style={{ padding: '0.35rem 0' }}>
+                <div className="row nowrap" style={{ gap: '0.6rem' }}>
+                  <span className="icon-badge" style={{ width: 34, height: 34 }}>
+                    <ServiceIcon prefix={queue.prefix} size={17} />
+                  </span>
+                  <div>
+                    <strong className="small">{queue.name}</strong>
+                    <p className="tiny muted" style={{ margin: 0 }}>
+                      {queue.waiting} en fila · nuevo turno ~{formatMinutes(queue.estimatedWaitMinutes)}
+                    </p>
+                  </div>
+                </div>
+                <span className={`chip ${queue.congestionLevel}`}>{CONGESTION_LABEL[queue.congestionLevel]}</span>
+              </div>
+            ))}
           </div>
         )}
       </section>
@@ -266,31 +333,50 @@ function CurrentTurnCard({
   const since = Date.parse((inService ? turn.startedAt : turn.calledAt) ?? '') || now;
   const elapsedSeconds = (now - since) / 1000;
   const absentInSeconds = absentTimeoutMinutes * 60 - elapsedSeconds;
+  const expectedSeconds = (turn.expectedTotalMinutes ?? 0) * 60;
+  const stepShare = turn.steps.length ? completed.length / turn.steps.length : 0;
 
   return (
     <section className="card accent stack">
       <div className="spread">
-        <div>
-          <p className="muted small">{turn.serviceTypeName}</p>
-          <div className="ticket-code" style={{ fontSize: '2.4rem' }}>
-            {turn.ticketCode}
+        <div className="row" style={{ gap: '0.75rem' }}>
+          <span className="icon-badge" style={{ width: 48, height: 48 }}>
+            <ServiceIcon prefix={turn.ticketCode.split('-')[0]} size={24} />
+          </span>
+          <div>
+            <div className="ticket-code" style={{ fontSize: '2.2rem', color: 'var(--primary)' }}>
+              {turn.ticketCode}
+            </div>
+            <p className="muted small" style={{ margin: 0 }}>
+              {turn.serviceTypeName}
+            </p>
           </div>
         </div>
-        {turn.preferential && <span className="chip">Preferencial</span>}
+        {turn.preferential && <span className="chip medium">Preferencial</span>}
       </div>
 
       {!inService && (
         <>
-          <p className="callout go">Cliente llamado. Esperando que llegue a la ventanilla.</p>
-          <p className="muted small">
-            Se marcará ausente automáticamente en {formatCountdown(Math.max(0, absentInSeconds))}.
+          <p className="callout info">
+            <Megaphone size={18} aria-hidden />
+            Cliente llamado. Esperando que llegue a la ventanilla.
           </p>
+          <div>
+            <div className="spread tiny muted" style={{ marginBottom: 4 }}>
+              <span>Ausente automático</span>
+              <span className="num">{formatCountdown(Math.max(0, absentInSeconds))}</span>
+            </div>
+            <div className="meter">
+              <span style={{ width: `${Math.min(100, (elapsedSeconds / (absentTimeoutMinutes * 60)) * 100)}%` }} />
+            </div>
+          </div>
           <div className="grid two">
-            <button className="teal" disabled={pending !== null} onClick={onStart}>
-              {pending === 'start' ? 'Iniciando…' : 'Cliente llegó: iniciar atención'}
+            <button className="success" disabled={pending !== null} onClick={onStart}>
+              <PlayCircle size={18} aria-hidden />
+              {pending === 'start' ? 'Iniciando…' : 'Llegó: iniciar atención'}
             </button>
             <button className="danger" disabled={pending !== null} onClick={onAbsent}>
-              Marcar ausente
+              <UserX size={18} aria-hidden /> Marcar ausente
             </button>
           </div>
         </>
@@ -298,26 +384,46 @@ function CurrentTurnCard({
 
       {inService && (
         <>
-          <div className="grid two">
-            <div className="metric">
-              <span className="label">En atención</span>
-              <span className="value">{formatCountdown(elapsedSeconds)}</span>
+          <div className="grid two" style={{ alignItems: 'center' }}>
+            <div style={{ display: 'grid', placeItems: 'center' }}>
+              <ProgressRing progress={expectedSeconds ? elapsedSeconds / expectedSeconds : 0} size={150} stroke={11}>
+                <span className="tiny muted" style={{ fontWeight: 700 }}>
+                  EN ATENCIÓN
+                </span>
+                <span className="countdown" style={{ fontSize: '1.9rem' }}>
+                  {formatCountdown(elapsedSeconds)}
+                </span>
+              </ProgressRing>
             </div>
-            <div className="metric">
-              <span className="label">Restante (IA)</span>
-              <span className="value ai">{formatMinutes(turn.remainingMinutes)}</span>
+            <div className="stack tight">
+              <div className="kpi">
+                <span className="icon-badge ai">
+                  <BrainCircuit size={20} aria-hidden />
+                </span>
+                <div className="metric">
+                  <span className="label">Restante (IA)</span>
+                  <span className="value ai">{formatMinutes(turn.remainingMinutes)}</span>
+                </div>
+              </div>
               {turn.lowerMinutes !== null && turn.upperMinutes !== null && (
-                <span className="muted small">
-                  {formatMinutes(turn.lowerMinutes)} – {formatMinutes(turn.upperMinutes)}
+                <span className="tiny muted">
+                  Rango: {formatMinutes(turn.lowerMinutes)} – {formatMinutes(turn.upperMinutes)}
                 </span>
               )}
+              <span className="tiny muted">Total esperado: {formatMinutes(turn.expectedTotalMinutes)}</span>
             </div>
           </div>
 
           <div>
-            <h3 className="small muted">
-              Pasos ({completed.length}/{turn.steps.length})
-            </h3>
+            <div className="spread" style={{ marginBottom: 6 }}>
+              <h3 style={{ margin: 0 }}>Pasos de la atención</h3>
+              <span className="small ink-2 num">
+                {completed.length}/{turn.steps.length}
+              </span>
+            </div>
+            <div className="meter" style={{ marginBottom: 10 }}>
+              <span style={{ width: `${stepShare * 100}%` }} />
+            </div>
             <div className="steps">
               {turn.steps.map((step) => {
                 const done = completed.includes(step.id);
@@ -327,7 +433,7 @@ function CurrentTurnCard({
                       type="checkbox"
                       checked={done}
                       onChange={() => toggleStep(step.id)}
-                      style={{ width: 22, height: 22 }}
+                      style={{ width: 20, height: 20, accentColor: 'var(--success)' }}
                     />
                     <span>{step.name}</span>
                   </label>
@@ -336,7 +442,8 @@ function CurrentTurnCard({
             </div>
           </div>
 
-          <label className="check">
+          <label className="switch">
+            Caso complejo
             <input
               type="checkbox"
               checked={isComplex}
@@ -345,7 +452,6 @@ function CurrentTurnCard({
                 void save({ isComplex: e.target.checked });
               }}
             />
-            Caso complejo
           </label>
 
           <label>
@@ -360,10 +466,11 @@ function CurrentTurnCard({
 
           <div className="grid two">
             <button disabled={pending !== null} onClick={() => onComplete(true)}>
+              <SkipForward size={18} aria-hidden />
               {pending === 'complete-next' ? 'Finalizando…' : 'Finalizar y llamar siguiente'}
             </button>
             <button className="secondary" disabled={pending !== null} onClick={() => onComplete(false)}>
-              Solo finalizar
+              <CheckCheck size={18} aria-hidden /> Solo finalizar
             </button>
           </div>
         </>
