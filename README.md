@@ -1,14 +1,18 @@
 # Fila Viva — Frontend
 
+![Next.js 14](https://img.shields.io/badge/Next.js_14-000000?logo=nextdotjs&logoColor=white) ![React](https://img.shields.io/badge/React-149ECA?logo=react&logoColor=white) ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white) ![Socket.io](https://img.shields.io/badge/Socket.io-010101?logo=socketdotio&logoColor=white) ![PWA](https://img.shields.io/badge/PWA-5A0FC8?logo=pwa&logoColor=white)
+
 Interfaz de **Fila Viva** para una sucursal bancaria ficticia (Banco Demo). El cliente toma turno desde el celular y ve, en vivo, cuántas personas tiene delante, cuánto va a esperar y con qué confianza. El asesor atiende desde su panel y el admin gestiona y mide todo. Este repositorio es **uno de tres**:
 
 | Repositorio | Qué hace | Puerto |
 |---|---|---|
-| `fila-viva-backend` | API central, orquestación y tiempo real | 3000 |
-| `fila-viva-frontend` (este) | Web/PWA del cliente, panel del asesor, panel del admin y pantalla de sala | 3001 |
-| `fila-viva-ai` | Modelos de ML + simulación de la cola | 8000 |
+| [`fila-viva-backend`](https://github.com/JuanMaya8/fila-viva-backend) | API central, orquestación y tiempo real | 3000 |
+| [`fila-viva-frontend`](https://github.com/JuanMaya8/fila-viva-frontend) (este) | Web/PWA del cliente, panel del asesor, panel del admin y pantalla de sala | 3001 |
+| [`fila-viva-ai`](https://github.com/JuanMaya8/fila-viva-ai) | Modelos de ML + simulación de la cola | 8000 |
 
-El orden de arranque y el guion de demo están en `README-GENERAL.md`, en la carpeta que contiene los tres repositorios.
+**Demo en vivo:** [fila-viva-frontend.vercel.app](https://fila-viva-frontend.vercel.app) · API: [fila-viva-backend.onrender.com](https://fila-viva-backend.onrender.com/health) · IA: [fila-viva-ai.onrender.com](https://fila-viva-ai.onrender.com/health)
+
+> Los servicios de Render usan el plan gratuito: si llevan un rato sin uso, la primera petición puede tardar cerca de un minuto mientras arrancan.
 
 ---
 
@@ -48,7 +52,7 @@ El orden de arranque y el guion de demo están en `README-GENERAL.md`, en la car
 
 ## 3. Cómo correrlo (Windows, PowerShell)
 
-Primero levanta `fila-viva-ai` y `fila-viva-backend` (ver sus README o `README-GENERAL.md`).
+Primero levanta `fila-viva-ai` y `fila-viva-backend` (ver la sección *Cómo correrlo* de sus README).
 
 ```powershell
 cd "C:\Users\Acer\Desktop\PROYECTO 1 Fil\fila-viva-frontend"
@@ -86,9 +90,12 @@ npm run lint
 3. En el backend (Render), pon la URL de Vercel en `FRONTEND_URL`, que habilita CORS y WebSocket para ese origen.
 4. Despliega. El primer acceso puede tardar si el plan gratuito de Render estaba dormido; mientras tanto, el middleware redirige al login.
 
-## Contratos entre repositorios
+## 6. Contratos entre servicios
 
-> Esta sección es idéntica en los tres README. Todos los campos van en camelCase. Tipos: TypeScript en `fila-viva-backend/src/modules/prediction/interfaces/prediction-result.interface.ts` y `src/modules/queue/interfaces/queue-views.interface.ts`, TypeScript en `fila-viva-frontend/src/lib/types.ts`, y Pydantic en `fila-viva-ai/app/schemas.py`. El contrato gRPC equivalente está en `proto/fila_viva_prediction.proto` (igual en la IA y en el backend). Si cambias un contrato, actualízalo en los tres repositorios.
+Todos los campos van en camelCase. Las definiciones viven en el código: Pydantic en [`fila-viva-ai/app/schemas.py`](https://github.com/JuanMaya8/fila-viva-ai/blob/main/app/schemas.py), TypeScript en [`fila-viva-backend/src/modules/prediction/interfaces/`](https://github.com/JuanMaya8/fila-viva-backend/tree/main/src/modules/prediction/interfaces) y [`fila-viva-frontend/src/lib/types.ts`](https://github.com/JuanMaya8/fila-viva-frontend/blob/main/src/lib/types.ts). El contrato gRPC equivalente está en `proto/fila_viva_prediction.proto` (igual en la IA y en el backend).
+
+<details>
+<summary><strong>Ver los contratos JSON completos</strong></summary>
 
 ### Backend → IA (todas las rutas excepto `/health` llevan el header `X-API-Key: <INTERNAL_API_KEY>`)
 
@@ -289,7 +296,9 @@ Estados del turno: `created → called → in_service → completed`, más `abse
 
 El token de socket se obtiene con `POST /auth/socket-token` (dura 5 minutos), porque la cookie de sesión es httpOnly. Cada `join*` tiene su `leave*`.
 
-## Notas para quien continúe el proyecto (persona o IA)
+</details>
+
+## 7. Convenciones del proyecto
 
 - Código, comentarios y commits en inglés; textos de la interfaz y README en español.
 - `src/lib/types.ts` refleja los contratos del backend: si cambian allá, cambian aquí primero.
