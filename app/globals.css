@@ -210,14 +210,8 @@ p {
 }
 
 .brand-mark {
-  width: 42px;
-  height: 42px;
+  flex-shrink: 0;
   border-radius: 13px;
-  background: linear-gradient(140deg, var(--honey), var(--primary));
-  display: grid;
-  place-items: center;
-  color: #fff;
-  font-weight: 800;
   box-shadow: 0 8px 20px -8px rgba(194, 84, 31, 0.6);
 }
 
