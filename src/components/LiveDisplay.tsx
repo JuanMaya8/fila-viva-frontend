@@ -5,7 +5,7 @@ import { useCallback, useState } from 'react';
 import { useNow } from '../hooks/useNow';
 import { useRoom, useSocket } from '../hooks/useSocket';
 import { api, pickInstitution } from '../lib/api';
-import { formatMinutes } from '../lib/format';
+import { formatBranchDate, formatBranchTime, formatMinutes } from '../lib/format';
 import type { DisplayView } from '../lib/types';
 import { Brand } from './Brand';
 import { ServiceIcon } from './ui/visuals';
@@ -13,7 +13,7 @@ import { ServiceIcon } from './ui/visuals';
 export function LiveDisplay({ initial }: { initial: DisplayView | null }) {
   const { socket, connected } = useSocket();
   const [view, setView] = useState(initial);
-  const now = useNow(10_000);
+  const now = useNow(1000);
 
   const refresh = useCallback(async () => {
     try {
@@ -54,7 +54,10 @@ export function LiveDisplay({ initial }: { initial: DisplayView | null }) {
         <Brand subtitle={view.institutionName} />
         <div style={{ textAlign: 'right' }}>
           <div className="clock" suppressHydrationWarning>
-            {new Date(now).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}
+            {formatBranchTime(now)}
+          </div>
+          <div className="clock-date" suppressHydrationWarning>
+            {formatBranchDate(now)}
           </div>
           <span className={`chip ${connected ? 'live' : 'down'}`}>
             <span className="dot" />

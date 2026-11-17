@@ -51,3 +51,31 @@ export const SOURCE_LABEL = {
   baseline: 'Teoría de colas (M/M/c)',
   fallback: 'Estimación de respaldo',
 } as const;
+
+/**
+ * Branch time zone. Fixed so the server render (UTC on Vercel) and the
+ * browser show the same wall-clock time and date.
+ */
+export const BRANCH_TIME_ZONE = 'America/Bogota';
+
+/** "14:05" in the branch time zone. */
+export function formatBranchTime(epochMs: number): string {
+  return new Intl.DateTimeFormat('es-CO', {
+    timeZone: BRANCH_TIME_ZONE,
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).format(epochMs);
+}
+
+/** "Martes, 17 de noviembre de 2026" in the branch time zone. */
+export function formatBranchDate(epochMs: number): string {
+  const text = new Intl.DateTimeFormat('es-CO', {
+    timeZone: BRANCH_TIME_ZONE,
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  }).format(epochMs);
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}

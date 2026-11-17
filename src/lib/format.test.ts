@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { friendlyMessage, pickInstitution } from './api';
-import { formatCountdown, formatMinutes } from './format';
+import { formatBranchDate, formatBranchTime, formatCountdown, formatMinutes } from './format';
 
 describe('formatting', () => {
   it('formats minutes for people', () => {
@@ -32,5 +32,22 @@ describe('api helpers', () => {
     ];
     expect(pickInstitution(institutions)?.id).toBe('1');
     expect(pickInstitution([])).toBeNull();
+  });
+});
+
+describe('branch clock', () => {
+  // 2026-11-17 19:05 UTC is 14:05 in Bogotá (UTC-5, no daylight saving).
+  const instant = Date.UTC(2026, 10, 17, 19, 5);
+
+  it('shows the Bogotá time whatever the machine time zone is', () => {
+    expect(formatBranchTime(instant)).toBe('14:05');
+  });
+
+  it('shows the Bogotá date, capitalised', () => {
+    expect(formatBranchDate(instant)).toBe('Martes, 17 de noviembre de 2026');
+  });
+
+  it('keeps the previous day late in the evening in Bogotá', () => {
+    expect(formatBranchDate(Date.UTC(2026, 10, 18, 3, 0))).toMatch(/^Martes, 17 de noviembre/);
   });
 });
