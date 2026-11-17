@@ -208,7 +208,10 @@ export function ServicePicker({ initialInstitution, initialServiceTypes }: Props
         <div className="sticky-bottom">
           <div className="stack tight">
             <label className="switch">
-              Atención preferencial
+              <span className="switch-text">
+                Atención preferencial
+                <small id="preferential-help">Adultos mayores, embarazo o discapacidad.</small>
+              </span>
               <input
                 type="checkbox"
                 checked={preferential}
@@ -216,9 +219,6 @@ export function ServicePicker({ initialInstitution, initialServiceTypes }: Props
                 aria-describedby="preferential-help"
               />
             </label>
-            <p id="preferential-help" className="tiny muted" style={{ margin: 0 }}>
-              Adultos mayores, embarazo o discapacidad.
-            </p>
             {submitError && (
               <p className="callout error" role="alert">
                 <AlertCircle size={18} aria-hidden />
