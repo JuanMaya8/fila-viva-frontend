@@ -6,7 +6,7 @@ export const metadata = { title: 'Mi turno · Fila Viva' };
 
 export default function TurnPage({ params }: { params: { id: string } }) {
   return (
-    <main className="page">
+    <main className="page web">
       <div className="topbar">
         <Brand />
       </div>

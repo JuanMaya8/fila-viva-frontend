@@ -1501,3 +1501,93 @@ tbody tr:hover {
     transform: rotate(360deg);
   }
 }
+
+/* ---------- Desktop layouts (mobile stays single column) ---------- */
+.service-grid,
+.ticket-layout {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.home-features,
+.home-login {
+  margin-top: 1rem;
+}
+
+@media (min-width: 900px) {
+  .page.web {
+    max-width: 1120px;
+    padding: 1.75rem 2rem 7rem;
+  }
+
+  .service-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+  }
+
+  .sticky-bottom {
+    max-width: 680px;
+    margin-inline: auto;
+  }
+
+  .home {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+    gap: 1.25rem 2.5rem;
+    align-items: start;
+  }
+
+  .home > .topbar,
+  .home-features {
+    grid-column: 1 / -1;
+  }
+
+  .home-features {
+    margin-top: 0;
+  }
+
+  .home-hero {
+    grid-column: 1;
+    padding-top: 2.5rem;
+  }
+
+  .home-hero h1 {
+    font-size: clamp(2.4rem, 3.6vw, 3.3rem);
+  }
+
+  .home-pulse {
+    grid-column: 1;
+  }
+
+  .home-login {
+    grid-column: 2;
+    grid-row: 2 / span 2;
+    margin-top: 2.5rem;
+  }
+
+  .home-features .feature-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.5rem;
+  }
+
+  .ticket-layout {
+    grid-template-columns: minmax(0, 400px) minmax(0, 1fr);
+    gap: 1.5rem;
+    align-items: start;
+  }
+
+  .ticket-side {
+    position: sticky;
+    top: 1.5rem;
+  }
+
+  .advisor-layout {
+    grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .advisor-layout > header,
+  .advisor-layout > .callout {
+    grid-column: 1 / -1;
+  }
+}

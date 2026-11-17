@@ -167,7 +167,7 @@ export function ServicePicker({ initialInstitution, initialServiceTypes }: Props
         </div>
       )}
 
-      <div className="stack" role="radiogroup" aria-label="Trámites">
+      <div className="service-grid" role="radiogroup" aria-label="Trámites">
         {sorted.map((type) => (
           <button
             key={type.id}

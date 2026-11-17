@@ -5,7 +5,7 @@ export const metadata = { title: 'Panel del asesor · Fila Viva' };
 
 export default function AdvisorPage() {
   return (
-    <main className="page">
+    <main className="page web">
       <AdvisorPanel />
     </main>
   );

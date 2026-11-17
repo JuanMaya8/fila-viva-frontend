@@ -135,7 +135,7 @@ export function AdvisorPanel() {
   const waitingTotal = view.queues.reduce((sum, q) => sum + q.waiting, 0);
 
   return (
-    <div className="stack fade-in">
+    <div className="stack fade-in advisor-layout">
       <header className="card">
         <div className="spread">
           <div className="row" style={{ gap: '0.8rem' }}>

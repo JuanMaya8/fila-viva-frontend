@@ -176,7 +176,8 @@ export function LiveTicket({ turnId }: { turnId: string }) {
   const maxBar = Math.max(1, turn.estimatedWaitMinutes ?? 0, turn.traditionalEstimateMinutes ?? 0);
 
   return (
-    <div className="stack fade-in">
+    <div className="ticket-layout fade-in">
+      <div className="ticket-side">
       <section className="ticket-hero" aria-live="polite">
         <div className="spread">
           <span className="label">Tu turno · {turn.serviceTypeName}</span>
@@ -200,6 +201,9 @@ export function LiveTicket({ turnId }: { turnId: string }) {
         </div>
         <div className="ticket-notch" />
       </section>
+      </div>
+
+      <div className="ticket-main stack">
 
       {!CLOSED.has(turn.status) || turn.status === 'completed' ? (
         <section className="card flat">
@@ -378,6 +382,7 @@ export function LiveTicket({ turnId }: { turnId: string }) {
       <p className="tiny muted" style={{ textAlign: 'center' }}>
         Guarda esta página: tu turno se actualiza solo, sin recargar.
       </p>
+      </div>
     </div>
   );
 }

@@ -13,7 +13,7 @@ export const metadata = { title: 'Tomar turno · Fila Viva' };
 export default async function TakeTurnPage() {
   const { institution, serviceTypes } = await loadCatalog(revalidate);
   return (
-    <main className="page">
+    <main className="page web">
       <div className="topbar">
         <Brand subtitle={institution?.name} />
       </div>

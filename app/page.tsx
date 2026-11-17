@@ -29,7 +29,7 @@ const FEATURES = [
 /** Rendering: static (SSG). The live pulse and the login form hydrate on the client. */
 export default function HomePage() {
   return (
-    <main className="page">
+    <main className="page web home">
       <div className="topbar">
         <Brand />
         <Link href="/display" className="button secondary" style={{ minHeight: 40, padding: '0.5rem 0.9rem' }}>
@@ -38,7 +38,7 @@ export default function HomePage() {
         </Link>
       </div>
 
-      <section className="hero stack fade-in">
+      <section className="hero home-hero stack fade-in">
         <span className="eyebrow">
           <Clock3 size={15} aria-hidden /> Espera inteligente
         </span>
@@ -54,9 +54,11 @@ export default function HomePage() {
         </p>
       </section>
 
-      <BranchPulse />
+      <div className="home-pulse">
+        <BranchPulse />
+      </div>
 
-      <section className="card" style={{ marginTop: '1rem' }}>
+      <section className="card home-features">
         <h2>Cómo funciona</h2>
         <div className="feature-list" style={{ marginTop: '0.75rem' }}>
           {FEATURES.map(({ icon: Icon, tone, title, text }) => (
@@ -73,7 +75,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="card" style={{ marginTop: '1rem' }}>
+      <section className="card home-login">
         <div className="card-title">
           <span className="icon-badge honey">
             <ShieldCheck size={20} aria-hidden />
